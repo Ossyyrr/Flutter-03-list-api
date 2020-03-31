@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 const swatch_1 = Color(0xff91a1b4);
 const swatch_2 = Color(0xffe3e6f3);
@@ -33,11 +34,17 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  ScrollController _controller;
+  double backgroundHeight = 180.0;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController();
+    _controller.addListener(() {
+      setState(() {
+        backgroundHeight = max(0, 180 - _controller.offset / 1.5);
+      });
     });
   }
 
@@ -45,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: swatch_3.withOpacity(0.5),
           elevation: 0.0,
           title: Padding(
             padding: EdgeInsets.only(left: 16.0),
@@ -70,19 +77,32 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _body() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-      child: ListView(
-        children: <Widget>[
-          Text('Discover rhings of this world'),
-          _bigItem(),
-          _item('Nombre', 'assets/galaxy.jpg'),
-          _item('Nombre', 'assets/galaxy.jpg'),
-          _item('Nombre', 'assets/galaxy.jpg'),
-          _item('Nombre', 'assets/galaxy.jpg'),
-          _item('Nombre', 'assets/galaxy.jpg'),
-        ],
-      ),
+    return Stack(
+      children: <Widget>[
+        Container(
+          width: double.infinity,
+          height: backgroundHeight,
+          color: swatch_3.withOpacity(0.5),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: ListView(
+            controller: _controller,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Text('Discover rhings of this world'),
+              ),
+              _bigItem(),
+              _item('Nombre', 'assets/galaxy.jpg'),
+              _item('Nombre', 'assets/galaxy.jpg'),
+              _item('Nombre', 'assets/galaxy.jpg'),
+              _item('Nombre', 'assets/galaxy.jpg'),
+              _item('Nombre', 'assets/galaxy.jpg'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -158,7 +178,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   Text('Titulo muy largo de al menos dos líneas'),
-                  Text('subtitulo pequeño y gris'),
+                  Text(
+                    'subtitulo pequeño y gris',
+                    style: TextStyle(fontWeight: FontWeight.w300),
+                  ),
                 ],
               ),
             ),
