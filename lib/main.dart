@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'network.dart';
 import 'package:webfeed/webfeed.dart';
+// import 'package:webview_flutter/webview_flutter.dart';
 
 const swatch_1 = Color(0xff91a1b4);
 const swatch_2 = Color(0xffe3e6f3);
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
         home: MyHomePage(title: 'Latest news'),
         onGenerateRoute: (RouteSettings settings) {
           WidgetBuilder builder;
+
           switch (settings.name) {
             case '/':
               builder =
@@ -34,7 +36,7 @@ class MyApp extends StatelessWidget {
               if (args is RssItem) {
                 builder = (BuildContext context) => ShowPage(
                       title: args.categories.first.value,
-                      content: "Contenido",
+                      content: args.content.value,
                     );
               }
               break;
@@ -86,12 +88,20 @@ class _ShowPageState extends State<ShowPage> {
             )
           ],
         ),
-        body: _body());
+        body: Container(
+          child: Text(
+            widget.content,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 30.0,
+            ),
+          ),
+        ));
   }
 
-  Widget _body() {
+  /* Widget _body() {
     return Container();
-  }
+  } */
 }
 
 class MyHomePage extends StatefulWidget {

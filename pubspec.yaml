@@ -17,12 +17,11 @@ dev_dependencies:
     sdk: flutter
   webfeed: ^0.4.2
   http: ^0.12.0+1
+  webview_flutter: ^0.3.18
 
 flutter:
   assets:
-    - assets/brain.jpg
     - assets/galaxy.jpg
     - assets/gato.jpg
-    - assets/loro.jpeg
 
   uses-material-design: true
