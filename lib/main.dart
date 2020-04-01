@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'network.dart';
+import 'package:webfeed/webfeed.dart';
 
 const swatch_1 = Color(0xff91a1b4);
 const swatch_2 = Color(0xffe3e6f3);
@@ -36,10 +38,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   ScrollController _controller;
   double backgroundHeight = 180.0;
+  Future<RssFeed> future;
 
   @override
   void initState() {
     super.initState();
+
+    future = getNews();
+
     _controller = ScrollController();
     _controller.addListener(() {
       setState(() {
@@ -77,33 +83,62 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _body() {
-    return Stack(
-      children: <Widget>[
-        Container(
-          width: double.infinity,
-          height: backgroundHeight,
-          color: swatch_3.withOpacity(0.5),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: ListView(
-            controller: _controller,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Text('Discover rhings of this world'),
-              ),
-              _bigItem(),
-              _item('Nombre', 'assets/galaxy.jpg'),
-              _item('Nombre', 'assets/galaxy.jpg'),
-              _item('Nombre', 'assets/galaxy.jpg'),
-              _item('Nombre', 'assets/galaxy.jpg'),
-              _item('Nombre', 'assets/galaxy.jpg'),
-            ],
-          ),
-        ),
-      ],
-    );
+    return FutureBuilder(
+        future: future,
+        builder: (BuildContext context, AsyncSnapshot<RssFeed> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.active:
+            case ConnectionState.waiting:
+              return Center(child: CircularProgressIndicator());
+            case ConnectionState.done:
+              if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+              return Stack(
+                children: <Widget>[
+                  Container(
+                    width: double.infinity,
+                    height: backgroundHeight,
+                    color: swatch_3.withOpacity(0.5),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                    child: ListView.builder(
+                        controller: _controller,
+                        itemCount: snapshot.data.items.length +
+                            2, //noticias mas subtitulo e imagen grande
+                        itemBuilder: (BuildContext context, int index) {
+                          if (index == 0) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12.0),
+                              child: Text(snapshot.data.description),
+                            );
+                          }
+                          if (index == 1) {
+                            return _bigItem();
+                          }
+
+                          return _item(snapshot.data.items[index - 2]);
+                        }
+                        /*  children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(snapshot.data.description),
+                        ),
+                        _bigItem(),
+                        _item('Nombre', 'assets/galaxy.jpg'),
+                        _item('Nombre', 'assets/galaxy.jpg'),
+                        _item('Nombre', 'assets/galaxy.jpg'),
+                        _item('Nombre', 'assets/galaxy.jpg'),
+                        _item('Nombre', 'assets/galaxy.jpg'),
+                      ],  */
+                        ),
+                  ),
+                ],
+              );
+          }
+          return null;
+        });
   }
 
   Widget _bigItem() {
@@ -137,7 +172,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _item(String name, String imageName) {
+  Widget _item(RssItem item) {
+    var mediaUrl = _extractImage(item.content.value);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -160,7 +196,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             color: swatch_5,
                           ),
                           child: Center(
-                            child: Text(name[0],
+                            child: Text(item.categories.first.value[0],
                                 style: TextStyle(
                                   color: Colors.white,
                                 )),
@@ -168,7 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(
-                          name,
+                          item.categories.first.value,
                           style: TextStyle(
                             fontSize: 20.0,
                             fontWeight: FontWeight.bold,
@@ -177,21 +213,42 @@ class _MyHomePageState extends State<MyHomePage> {
                       )
                     ],
                   ),
-                  Text('Titulo muy largo de al menos dos líneas'),
+                  Text(item.title),
                   Text(
-                    'subtitulo pequeño y gris',
+                    item.dc.creator,
                     style: TextStyle(fontWeight: FontWeight.w300),
                   ),
                 ],
               ),
             ),
           ),
-          Container(
-              height: 150.0,
-              width: 150.0,
-              child: Image(image: AssetImage(imageName))),
+          mediaUrl != null
+              ? Container(
+                  height: 150.0,
+                  width: 150.0,
+                  child: FadeInImage.assetNetwork(
+                      placeholder: "assets/galaxy.jpg",
+                      image: mediaUrl,
+                      fit: BoxFit.cover))
+              : SizedBox(
+                  height: 150.0,
+                ),
         ],
       ),
     );
   }
+}
+
+String _extractImage(String content) {
+  RegExp regExp =
+      RegExp('<img[^>]+src="([^">]+)"'); // extrae imagenes desde un html
+
+  Iterable<Match> matches =
+      regExp.allMatches(content); //traigo todos los matches de ese contenido
+
+  if (matches.length > 0) {
+    // me quedo con la primera imagen que encuentro
+    return matches.first.group(1);
+  }
+  return null;
 }
