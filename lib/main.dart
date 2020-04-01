@@ -17,12 +17,80 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Latest news'),
-    );
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: MyHomePage(title: 'Latest news'),
+        onGenerateRoute: (RouteSettings settings) {
+          WidgetBuilder builder;
+          switch (settings.name) {
+            case '/':
+              builder =
+                  (BuildContext context) => MyHomePage(title: 'Latest news');
+              break;
+            case '/show':
+              var args = settings.arguments;
+              if (args is RssItem) {
+                builder = (BuildContext context) => ShowPage(
+                      title: args.categories.first.value,
+                      content: "Contenido",
+                    );
+              }
+              break;
+          }
+          return MaterialPageRoute(builder: builder, settings: settings);
+        });
+  }
+}
+
+class ShowPage extends StatefulWidget {
+  final String title;
+  final String content;
+
+  const ShowPage({Key key, this.title, this.content}) : super(key: key);
+
+  @override
+  _ShowPageState createState() => _ShowPageState();
+}
+
+class _ShowPageState extends State<ShowPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: swatch_3.withOpacity(0.5),
+          elevation: 0.0,
+          centerTitle: false,
+          leading: InkWell(
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+              child: Icon(Icons.arrow_back_ios, color: Colors.black)),
+          title: Padding(
+            padding: EdgeInsets.only(left: 16.0),
+            child: Text(
+              widget.title,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 30.0,
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(right: 32.0),
+              child: InkWell(
+                child: Icon(Icons.share, color: swatch_1),
+              ),
+            )
+          ],
+        ),
+        body: _body());
+  }
+
+  Widget _body() {
+    return Container();
   }
 }
 
@@ -60,6 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           backgroundColor: swatch_3.withOpacity(0.5),
           elevation: 0.0,
+          centerTitle: false,
           title: Padding(
             padding: EdgeInsets.only(left: 16.0),
             child: Text(
@@ -174,66 +243,77 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _item(RssItem item) {
     var mediaUrl = _extractImage(item.content.value);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              height: 150.0,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Container(
-                          width: 42.0,
-                          height: 42.0,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(21.0),
-                            color: swatch_5,
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushNamed('/show',
+            arguments:
+                item); //of busca dentro del arbol un widget de tipo navigator que ya esté insertado (acceder a widget de los padres)
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Container(
+                height: 150.0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Container(
+                            width: 42.0,
+                            height: 42.0,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(21.0),
+                              color: swatch_5,
+                            ),
+                            child: Center(
+                              child: Text(item.categories.first.value[0],
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  )),
+                            )),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(
+                            item.categories.first.value,
+                            style: TextStyle(
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          child: Center(
-                            child: Text(item.categories.first.value[0],
-                                style: TextStyle(
-                                  color: Colors.white,
-                                )),
-                          )),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          item.categories.first.value,
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                  Text(item.title),
-                  Text(
-                    item.dc.creator,
-                    style: TextStyle(fontWeight: FontWeight.w300),
-                  ),
-                ],
+                        )
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(item.title),
+                    ),
+                    Text(
+                      item.dc.creator,
+                      style: TextStyle(fontWeight: FontWeight.w300),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          mediaUrl != null
-              ? Container(
-                  height: 150.0,
-                  width: 150.0,
-                  child: FadeInImage.assetNetwork(
-                      placeholder: "assets/galaxy.jpg",
-                      image: mediaUrl,
-                      fit: BoxFit.cover))
-              : SizedBox(
-                  height: 150.0,
-                ),
-        ],
+            mediaUrl != null
+                ? Container(
+                    height: 150.0,
+                    width: 150.0,
+                    child: FadeInImage.assetNetwork(
+                        placeholder: "assets/galaxy.jpg",
+                        image: mediaUrl,
+                        fit: BoxFit.cover))
+                : SizedBox(
+                    height: 150.0,
+                  ),
+          ],
+        ),
       ),
     );
   }
